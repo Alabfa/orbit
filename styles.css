@@ -2029,6 +2029,39 @@ input.power-range {
   flex-shrink: 0
 }
 
+.home-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px
+}
+
+#goInstall[hidden], #installAction[hidden] { display: none }
+.install-content { padding-top: 10px; padding-bottom: 4px }
+.install-intro { display: flex; align-items: center; gap: 14px; margin-bottom: 16px }
+.install-intro img { flex: none; border-radius: var(--radius-control) }
+.install-intro p { margin: 0; font-size: calc(15px * var(--text-scale)) }
+.install-benefits { padding: 0; margin: 0 0 20px; list-style: none; color: var(--mut); font-size: calc(13px * var(--text-scale)) }
+.install-benefits li { display: flex; align-items: center; gap: 8px; margin: 5px 0 }
+.install-benefits li::before { content: ''; width: 6px; height: 6px; flex: none; border-radius: var(--radius-circle); background: var(--hi) }
+.install-platforms { display: flex; gap: 5px; padding: 5px; margin-bottom: 12px; background: var(--soft); border-radius: var(--radius-control) }
+.install-platforms button { flex: 1; min-height: 44px; border: 0; padding: 6px; border-radius: var(--radius-small); background: transparent; font-size: calc(12px * var(--text-scale)) }
+.install-platforms button[aria-pressed=true] { background: var(--card); box-shadow: var(--sh); font-weight: 600 }
+.install-guide { padding: 16px; background: var(--card); border: 1px solid var(--edge); border-radius: var(--radius-card) }
+.install-guide ol { margin: 0; padding-inline-start: 22px; font-size: calc(14px * var(--text-scale)) }
+.install-guide li { padding-inline-start: 4px; margin-bottom: 12px }
+.install-guide li::marker { color: var(--hi); font-weight: 600 }
+.install-hint { border-top: 1px solid var(--edge); padding-top: 12px; margin: 0; font-size: calc(12px * var(--text-scale)); color: var(--mut) }
+.install-offline { font-size: calc(13px * var(--text-scale)); font-weight: 500; margin: 16px 0 6px }
+.install-note { margin: 0; font-size: calc(12px * var(--text-scale)) }
+.install-status { font-size: calc(13px * var(--text-scale)); color: var(--mut); margin: 8px 0 0 }
+.install-status:empty { display: none }
+body[data-screen=install] .nav, body[data-screen=install] .foot { flex-shrink: 0 }
+
+@media(max-width:360px) {
+  .home-actions { gap: 4px }
+  .install-guide { padding: 12px }
+}
+
 .settings-summary {
   display: flex;
   align-items: center;

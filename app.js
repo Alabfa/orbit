@@ -98,6 +98,7 @@ function status() {
 }
 const chev = sv('<path d="M9 6l6 6-6 6"/>');
 const settingsIcon = sv('<path d="M3 6h18M3 12h18M3 18h18"/><circle cx="8" cy="6" r="2" fill="var(--card)"/><circle cx="16" cy="12" r="2" fill="var(--card)"/><circle cx="10" cy="18" r="2" fill="var(--card)"/>');
+const installIcon = sv('<path d="M12 3v12m-4-4 4 4 4-4M5 16v4h14v-4"/>');
 const RULES = COPY.rules.map((rule, i) => ({ ...rule, ic: [ICON.cover, ICON.room[0], ICON.kill, sv('<path d="M5 12l4 4 10-10"/>'), ICON.room[1]][i] }));
 
 /* ---------- setup: home, players, rules ---------- */
@@ -105,11 +106,48 @@ let saved = [];
 const logo = '<svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><circle cx="20" cy="20" r="15" stroke-dasharray="3 4"/><circle cx="20" cy="20" r="5" fill="#f2550f" stroke="none"/><circle cx="35" cy="20" r="3.4" fill="currentColor" stroke="none"/></svg>';
 function setup() {
   phase = 'setup'; game = null;
-  show(`<div class="home-top"><header class="brand">${logo}<b class="k">${ui(COPY.meta.brand)}</b></header><button type="button" class="back" id="goSettings" aria-label="${ui(COPY.settings.open)}">${settingsIcon}</button></div>
+  show(`<div class="home-top"><header class="brand">${logo}<b class="k">${ui(COPY.meta.brand)}</b></header><div class="home-actions"><button type="button" class="back" id="goInstall" aria-label="${ui(COPY.install.open)}" title="${ui(COPY.install.open)}" ${PWA.installed ? 'hidden' : ''}>${installIcon}</button><button type="button" class="back" id="goSettings" aria-label="${ui(COPY.settings.open)}">${settingsIcon}</button></div></div>
  <section class="hero"><div class="hero-art">${station(false)}</div><div class="hero-copy"><h1>${ui(COPY.home.title)}</h1><p>${ui(COPY.home.description)}</p><div class="tags">${COPY.home.tags.map(tag => `<span>${ui(tag)}</span>`).join('')}</div></div></section>
  <div class="foot"><button class="btn pulse" id="goPlayers">${ui(COPY.home.start)}</button><button class="btn ghost" id="goRules">${ui(COPY.home.rules)}</button></div>`);
-  $('goPlayers').onclick = playersScreen; $('goRules').onclick = () => rulesScreen(0); $('goSettings').onclick = () => settingsScreen('home')
+  $('goPlayers').onclick = playersScreen; $('goRules').onclick = () => rulesScreen(0); $('goSettings').onclick = () => settingsScreen('home');
+  $('goInstall').onclick = () => installScreen();
 }
+function installScreen(platform = PWA.platform()) {
+  phase = 'install';
+  const platforms = ['ios', 'android', 'desktop'];
+  if (!platforms.includes(platform)) platform = 'desktop';
+  show(`<div class="nav"><button type="button" class="back" id="installBack" aria-label="${ui(COPY.install.back)}">${chev}</button><h2>${ui(COPY.install.title)}</h2></div>
+  <div class="grow install-content"><div class="install-intro"><img src="icons/icon-192.png" width="64" height="64" alt=""><p>${ui(COPY.install.intro)}</p></div>
+  <ul class="install-benefits">${COPY.install.benefits.map(text => `<li>${ui(text)}</li>`).join('')}</ul>
+  <div class="install-platforms" role="group" aria-label="${ui(COPY.install.deviceLabel)}">${platforms.map(device => `<button type="button" data-install-platform="${device}" aria-pressed="${device === platform}">${ui(COPY.install[device])}</button>`).join('')}</div>
+  <section class="install-guide" aria-label="${ui(COPY.install[platform])}"><ol>${COPY.install[platform + 'Steps'].map(text => `<li>${ui(text)}</li>`).join('')}</ol><p class="install-hint">${ui(COPY.install[platform + 'Hint'])}</p></section>
+  <p class="install-offline" id="installOffline" role="status"></p><p class="small install-note">${ui(COPY.install.offlineNote)}</p>
+  <p class="install-status" id="installStatus" role="status" aria-live="polite"></p></div>
+  <div class="foot"><button type="button" class="btn" id="installAction">${ui(COPY.install.open)}</button><button type="button" class="btn ghost" id="installDone">${ui(COPY.install.done)}</button></div>`);
+  $('installBack').onclick = setup; $('installDone').onclick = setup;
+  $$('[data-install-platform]').forEach(button => button.onclick = () => {
+    installScreen(button.dataset.installPlatform);
+    document.querySelector(`[data-install-platform="${button.dataset.installPlatform}"]`).focus();
+  });
+  $('installAction').onclick = async () => {
+    const result = await PWA.prompt();
+    if ($('installStatus')) $('installStatus').textContent = COPY.install[result === 'accepted' ? 'installed' : result === 'dismissed' ? 'dismissed' : 'unavailable'];
+    refreshInstallUI();
+  };
+  refreshInstallUI();
+}
+function refreshInstallUI() {
+  if ($('goInstall')) $('goInstall').hidden = PWA.installed;
+  if (!$('installAction')) return;
+  const available = PWA.canPrompt || PWA.pending;
+  $('installAction').hidden = !available;
+  $('installAction').disabled = PWA.pending;
+  $('installAction').textContent = PWA.pending ? COPY.install.installing : COPY.install.open;
+  $('installDone').classList.toggle('ghost', available);
+  $('installOffline').textContent = COPY.install[PWA.offline === 'ready' ? 'offlineReady' : PWA.offline === 'loading' ? 'offlineLoading' : 'offlineUnavailable'];
+  if (PWA.installed) $('installStatus').textContent = COPY.install.installed;
+}
+window.addEventListener('pwa-statechange', refreshInstallUI);
 function settingsSummary() {
   return `<button type="button" class="settings-summary" id="editSettings" aria-label="${ui(COPY.settings.open)}"><span class="settings-summary-icon" aria-hidden="true">${settingsIcon}</span><span class="settings-summary-text">${ui(COPY.settings.summary, { seconds: preferences.turnSeconds, tasks: preferences.tasksPerCrew })}</span><span class="settings-summary-edit">${ui(COPY.settings.edit)}</span></button>`
 }
